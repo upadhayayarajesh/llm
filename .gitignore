@@ -164,3 +164,6 @@ cython_debug/
 
 model/
 data/
+datasets/
+cornell movie-dialogs corpus/
+mnist_datasets/
