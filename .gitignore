@@ -170,3 +170,8 @@ mnist_datasets/
 unhealthy_commnet_corpus_dataset/
 .vscode/
 lightning_logs/
+
+
+ROBERTA_LORA/results/
+ROBERTA_LORA/roberta-base-peft/
+ROBERTA_LORA/roberta-base-modified/
