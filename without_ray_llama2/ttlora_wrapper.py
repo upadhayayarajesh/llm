@@ -45,7 +45,7 @@ class LoRATTLinearWrapper(nn.Module):
             # tl.set_backend('pytorch')
 
             ### using tensor train, decompose the W_delta into multiple tensors based on the ranks and shapes provided
-            self.tt_cores_dummy = tensor_train(self.W_10d, self.tt_rank)
+            self.tt_cores_dummy = tensor_train(self.W_10d.detach().numpy(), self.tt_rank)
 
             ### transfer the values of tt_cores_dummy to self.tt_cores which are the newly added parameters of the model
             for i in range(len(self.tt_cores)):

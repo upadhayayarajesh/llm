@@ -11,7 +11,7 @@ import math
 
 def load_dataset_():
     
-    dataset = load_dataset("rajpurkar/squad_v2")
+    dataset = load_dataset("squad")
     # dataset = load_dataset("/usr/projects/unsupgan/afia/squad")
     return dataset
 
@@ -34,7 +34,7 @@ def get_tokenizer(model_path, datasets):
         inputs = tokenizer(
             questions,
             examples["context"],
-            max_length=8000,
+            max_length=512,
             truncation="only_second",
             #stride=stride,
             return_overflowing_tokens=True,

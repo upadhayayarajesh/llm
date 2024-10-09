@@ -67,7 +67,8 @@ def train_with_ray():
     # print(imdb_dataset)
     print(dataset)
 
-    train_dataset, val_dataset = get_tokenizer("/lustre/vescratch1/ceodspspectrum/llama3_70b/checkpoints", dataset)
+    model_name = "FacebookAI/roberta-base"
+    train_dataset, val_dataset = get_tokenizer(model_name, dataset)
 
 
     ### create train, validation and test dataloader that will be used during training, testing and validation. The dataloader specifies the number of rows in each batch and how many gpus to use
@@ -87,7 +88,7 @@ def train_with_ray():
 
 
  
-    model = AutoModelForQuestionAnswering.from_pretrained("/lustre/vescratch1/ceodspspectrum/llama3_70b/checkpoints")
+    model = AutoModelForQuestionAnswering.from_pretrained(model_name)
 
 
     model.config.pad_token_id = model.config.eos_token_id
@@ -102,7 +103,7 @@ def train_with_ray():
     
 
 
-    tt_shape = [16, 16, 16, 16, 16, 16]
+    tt_shape = [64, 16, 9, 64]
     tt_rank = get_tt_rank(5, tt_shape)
 
 
@@ -116,12 +117,13 @@ def train_with_ray():
     # assign_lora = partial(LoRALinearWrapper, rank=lora_r, alpha=lora_alpha)
 
     assign_loretta = partial(LoRATTLinearWrapper, tt_rank=tt_rank, alpha=loratt_alpha)
+    transformer_layer = model.roberta.encoder.layer
 
-    for layer in model.transformer.layers:
+    for layer in transformer_layer:
         if loratt_query:
-            layer.self_attn.q_proj = assign_loretta(layer.self_attn.q_proj, 0, tt_shape)
+            layer.attention.self.query= assign_loretta(layer.attention.self.query, 0, tt_shape)
         if loretta_value:
-            layer.self_attn.v_proj = assign_loretta(layer.self_attn.v_proj,2, tt_shape)
+            layer.attention.self.value = assign_loretta(layer.attention.self.value,2, tt_shape)
    
     print(model)
 
@@ -137,7 +139,7 @@ def train_with_ray():
     print("Total number of trainable parameters:", count_parameters(model))
 
 
-    lightning_model = CustomLightningModule(model,"/usr/projects/unsupgan/afia/llama2_7b_hf/checkpoints",5e-5)
+    lightning_model = CustomLightningModule(model,model_name,5e-5)
 
 
     # callbacks = [
