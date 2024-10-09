@@ -68,8 +68,8 @@ class CustomLightningModule(pl.LightningModule):
         # predicted_labels = torch.argmax(logits, 1)
         # self.val_acc(predicted_labels, batch["label"])
         # self.log("val_acc", self.val_acc, prog_bar=True)
-        with open("debug.txt", "a") as f:
-            f.write(" So validation output is good")
+        # with open("debug.txt", "a") as f:
+        #     f.write(" So validation output is good")
 
         start_logits, end_logits = outputs.start_logits, outputs.end_logits
         start_indices = torch.argmax(start_logits, dim=-1)

@@ -2,6 +2,7 @@
 
 import os
 import math
+import yaml
 import torch
 import pandas as pd
 import tensorly as tl
@@ -26,17 +27,16 @@ from transformers import (
 from train import CustomLightningModule
 
 
-def train_with_ray():
+def train_with_ray(epochs, lr, model_name, dataset_name):
 
     if not torch.cuda.is_available():
         print("Please switch to a GPU machine before running this notebook.")
 
-    dataset = load_dataset_()
+    dataset = load_dataset_(path=dataset_name)
 
     # print(imdb_dataset)
     print(dataset)
 
-    model_name = "FacebookAI/roberta-base"
     train_dataset, val_dataset = get_tokenizer(model_name, dataset)
 
     ### create train, validation and test dataloader that will be used during training, testing and validation. The dataloader specifies the number of rows in each batch and how many gpus to use
@@ -89,7 +89,7 @@ def train_with_ray():
         return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
     print("Total number of trainable parameters:", count_parameters(model))
-    lightning_model = CustomLightningModule(model, model_name, 5e-5)
+    lightning_model = CustomLightningModule(model, model_name, lr)
 
     early_atopping_callback = EarlyStopping(
         monitor="val_loss", patience=5, verbose=True, mode="min"
@@ -100,7 +100,7 @@ def train_with_ray():
     )
 
     trainer = pl.Trainer(
-        max_epochs=1,
+        max_epochs=epochs,
         callbacks=[early_atopping_callback, model_checkpoint_callback],
         accelerator="gpu",
         precision="16-mixed",
@@ -138,9 +138,21 @@ def train_with_ray():
     train_params = count_parameters(model)
 
 
+def load_config(file_path):
+    with open(file_path, "r") as file:
+        config = yaml.safe_load(file)
+    return config
+
+
 if __name__ == "__main__":
+    config = load_config("without_ray_llama2/config.yml")
+    model_name = config["model"]["name"]
+    lr = float(config["parameters"]["lr"])
+    epochs = int(config["parameters"]["epochs"])
+    dataset_name = config["dataset"]["name"]
+
     parser = ArgumentParser()
     parser.add_argument("--gpus", type=int, default=1)
     parser.add_argument("--data", type=str, default="sst2")
     args = parser.parse_args()
-    train_with_ray()
+    train_with_ray(epochs, lr, model_name, dataset_name)

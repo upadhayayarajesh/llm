@@ -1,0 +1,9 @@
+model:
+  name: FacebookAI/roberta-base
+
+parameters:
+  lr: 0.01
+  epochs: 1
+
+dataset:
+  name: squad
