@@ -9,17 +9,15 @@ import torch.nn.functional as F  # Add this import
 import math
 
 
-def load_dataset_():
-    
-    dataset = load_dataset("squad")
-    # dataset = load_dataset("/usr/projects/unsupgan/afia/squad")
+def load_dataset_(path):
+
+    dataset = load_dataset(path)
     return dataset
 
 
 def get_tokenizer(model_path, datasets):
 
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    # tokenizer = AutoTokenizer.from_pretrained("microsoft/deberta-base")
 
     print("Tokenizer input max length:", tokenizer.model_max_length)
     print("Tokenizer vocabulary size:", tokenizer.vocab_size)
@@ -36,12 +34,11 @@ def get_tokenizer(model_path, datasets):
             examples["context"],
             max_length=512,
             truncation="only_second",
-            #stride=stride,
+            # stride=stride,
             return_overflowing_tokens=True,
             return_offsets_mapping=True,
             padding="max_length",
         )
-
 
         offset_mapping = inputs.pop("offset_mapping")
         sample_map = inputs.pop("overflow_to_sample_mapping")
@@ -59,7 +56,7 @@ def get_tokenizer(model_path, datasets):
             # Find the start and end of the context
             # with open("debug.txt","w") as f:
             #     f.write(str(sequence_ids))
-    
+
             idx = 0
             while sequence_ids[idx] != 1:
                 idx += 1
@@ -67,12 +64,15 @@ def get_tokenizer(model_path, datasets):
             # with open("debug.txt","a") as f:
             #     f.write(str(idx))
 
-            while idx< len(sequence_ids) and sequence_ids[idx] == 1:
+            while idx < len(sequence_ids) and sequence_ids[idx] == 1:
                 idx += 1
             context_end = idx - 1
 
             # If the answer is not fully inside the context, label is (0, 0)
-            if offset[context_start][0] > start_char or offset[context_end][1] < end_char:
+            if (
+                offset[context_start][0] > start_char
+                or offset[context_end][1] < end_char
+            ):
                 start_positions.append(0)
                 end_positions.append(0)
             else:
@@ -80,18 +80,17 @@ def get_tokenizer(model_path, datasets):
                 idx = context_start
                 while idx <= context_end and offset[idx][0] <= start_char:
                     idx += 1
-                start_positions.append(idx-1)
+                start_positions.append(idx - 1)
 
                 idx = context_end
                 while idx >= context_start and offset[idx][1] > end_char:
                     idx -= 1
                 end_positions.append(idx + 1)
 
-
         inputs["start_positions"] = start_positions
         inputs["end_positions"] = end_positions
         return inputs
-       
+
     train_dataset = datasets["train"].map(
         preprocess_training_examples,
         batched=True,
